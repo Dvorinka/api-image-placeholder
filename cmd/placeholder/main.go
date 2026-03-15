@@ -17,7 +17,7 @@ import (
 func main() {
 	logger := log.New(os.Stdout, "[placeholder] ", log.LstdFlags)
 
-	port := envString("PORT", "8092")
+	port := envString("PORT", "30007")
 	apiKey := envString("PLACEHOLDER_API_KEY", "dev-placeholder-key")
 	if apiKey == "dev-placeholder-key" {
 		logger.Println("PLACEHOLDER_API_KEY not set, using default development key")
