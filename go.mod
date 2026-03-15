@@ -1,4 +1,4 @@
-module image-placeholder
+module apiservices/image-placeholder
 
 go 1.25.7
 
