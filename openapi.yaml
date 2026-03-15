@@ -1,0 +1,281 @@
+openapi: 3.0.3
+info:
+  title: Image Placeholder API
+  description: API for generating dynamic placeholder images with customizable text and colors
+  version: 1.0.0
+  contact:
+    name: API Services
+  license:
+    name: MIT
+
+servers:
+  - url: http://localhost:8092
+    description: Development server
+  - url: https://api.example.com
+    description: Production server
+
+paths:
+  /healthz:
+    get:
+      summary: Health check endpoint
+      description: Returns the health status of the service
+      tags:
+        - Health
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+
+  /v1/placeholder/generate:
+    post:
+      summary: Generate placeholder image
+      description: Generate a placeholder image with custom dimensions, colors, and text
+      tags:
+        - Image Generation
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateRequest'
+      responses:
+        '200':
+          description: Successful image generation response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/GenerateResult'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '405':
+          description: Method not allowed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /v1/placeholder/image/{sizeSpec}:
+    get:
+      summary: Get placeholder image by URL
+      description: Generate a placeholder image using URL path parameters
+      tags:
+        - Image Generation
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: sizeSpec
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9]+x[0-9]+(\.(png|jpg|jpeg))?$'
+          description: Image dimensions in WIDTHxHEIGHT format, optionally with format
+          example: "300x200.png"
+        - name: format
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [png, jpg, jpeg]
+            description: Override image format
+            example: "png"
+        - name: bg
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: '^#[0-9A-Fa-f]{6}$'
+            description: Background color in hex format
+            example: "#d9dde3"
+        - name: fg
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: '^#[0-9A-Fa-f]{6}$'
+            description: Foreground color in hex format
+            example: "#2d3748"
+        - name: text
+          in: query
+          required: false
+          schema:
+            type: string
+            maxLength: 80
+            description: Text to overlay on image
+            example: "Sample Text"
+      responses:
+        '200':
+          description: Successful image generation
+          content:
+            image/*:
+              schema:
+                type: string
+                format: binary
+          headers:
+            Content-Type:
+              description: MIME type of generated image
+              schema:
+                type: string
+                example: "image/png"
+            Cache-Control:
+              description: Cache control headers
+              schema:
+                type: string
+                example: "public, max-age=31536000, immutable"
+            ETag:
+              description: Entity tag for caching
+              schema:
+                type: string
+                example: '"abc123"'
+            X-Placeholder-Dimensions:
+              description: Image dimensions
+              schema:
+                type: string
+                example: "300x200"
+        '304':
+          description: Not modified (ETag match)
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '405':
+          description: Method not allowed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  schemas:
+    GenerateRequest:
+      type: object
+      required:
+        - width
+        - height
+      properties:
+        width:
+          type: integer
+          minimum: 1
+          maximum: 4096
+          description: Image width in pixels
+          example: 300
+        height:
+          type: integer
+          minimum: 1
+          maximum: 4096
+          description: Image height in pixels
+          example: 200
+        format:
+          type: string
+          enum: [png, jpg, jpeg]
+          default: png
+          description: Image format
+          example: "png"
+        background:
+          type: string
+          pattern: '^#[0-9A-Fa-f]{6}$'
+          description: Background color in hex format
+          default: "#d9dde3"
+          example: "#d9dde3"
+        foreground:
+          type: string
+          pattern: '^#[0-9A-Fa-f]{6}$'
+          description: Foreground color in hex format
+          default: "#2d3748"
+          example: "#2d3748"
+        text:
+          type: string
+          maxLength: 80
+          description: Text to overlay on image
+          example: "Sample Text"
+
+    GenerateResult:
+      type: object
+      properties:
+        width:
+          type: integer
+          description: Generated image width
+          example: 300
+        height:
+          type: integer
+          description: Generated image height
+          example: 200
+        format:
+          type: string
+          description: Image format
+          example: "png"
+        output_mime:
+          type: string
+          description: MIME type of output
+          example: "image/png"
+        background:
+          type: string
+          description: Background color used
+          example: "#d9dde3"
+        foreground:
+          type: string
+          description: Foreground color used
+          example: "#2d3748"
+        text:
+          type: string
+          description: Text overlay
+          example: "Sample Text"
+        cache_key:
+          type: string
+          description: Cache key for the generated image
+          example: "abc123def456"
+        output_base64:
+          type: string
+          description: Base64 encoded image data
+          example: "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error message
+          example: "width and height must be between 1 and 4096"
+
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: Authorization
+      description: API key for authentication (format: "Bearer YOUR_API_KEY")
+
+tags:
+  - name: Health
+    description: Health check endpoints
+  - name: Image Generation
+    description: Placeholder image generation functionality
