@@ -4,15 +4,15 @@ services:
   image-placeholder-api:
     build: .
     ports:
-      - "8080:8080"
+      - "30016:30016"
     environment:
-      - PORT=8080
+      - PORT=30016
       - ENVIRONMENT=${ENVIRONMENT:-development}
       - IMAGE_PLACEHOLDER_API_KEY=${IMAGE_PLACEHOLDER_API_KEY:-dev-image-placeholder-key}
       - RAPIDAPI_PROXY_SECRET=${RAPIDAPI_PROXY_SECRET:-}
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/healthz"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:30016/healthz"]
       interval: 30s
       timeout: 10s
       retries: 3
